@@ -1,0 +1,35 @@
+version: '3.9'
+
+services:
+  server:
+    container_name: ${PRJ_NAME}__server
+    image: ${PRJ_NAME}__server:1.0.0
+    build:
+      context: ./server/
+      dockerfile: ./Dockerfile
+    command: npm run start:dev
+    ports:
+      - "5000:5000"
+    networks:
+      - server-network
+    volumes:
+      - ./server:/usr/src/app
+      - /usr/src/app/node_modules
+      - log_volume_01:/var/log
+    restart: unless-stopped
+    depends_on:
+      - db
+  db:
+    container_name: ${PRJ_NAME}__db
+    image: postgres:${POSTGRES_VERSION}
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+    ports:
+      - "5432:5432"
+volumes:
+  log_volume_01: {}
+networks:
+  server-network: {}
