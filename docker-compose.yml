@@ -1,35 +1,65 @@
 version: '3.9'
 
 services:
-  server:
-    container_name: ${PRJ_NAME}__server
-    image: ${PRJ_NAME}__server:1.0.0
+  backend_dev:
+    container_name: ${PRJ_NAME}__backend_dev
+    image: ${PRJ_NAME}__backend_dev:1.0.0
     build:
       context: ./server/
       dockerfile: ./Dockerfile
+    environment:
+      - API_PORT=${API_PORT}
+      - TYPEORM_CONNECTION=${TYPEORM_CONNECTION}
+      - TYPEORM_USERNAME=${TYPEORM_USERNAME}
+      - TYPEORM_PASSWORD=${TYPEORM_PASSWORD}
+      - TYPEORM_DB=${TYPEORM_DB}
+      - TYPEORM_PORT=${TYPEORM_PORT}
+      - TYPEORM_HOST=${TYPEORM_HOST}
     command: npm run start:dev
     ports:
-      - "5000:5000"
-    networks:
-      - server-network
+      - ${API_PORT}:${API_PORT}
+    links:
+      - "db:database"
     volumes:
-      - ./server:/usr/src/app
-      - /usr/src/app/node_modules
-      - log_volume_01:/var/log
+      - ./server:/app
+    restart: unless-stopped
+    depends_on:
+      - db
+  backend_prod:
+    container_name: ${PRJ_NAME}__backend_prod
+    image: ${PRJ_NAME}__backend_prod:1.0.0
+    build:
+      context: ./server/
+      dockerfile: ./Dockerfile
+    environment:
+      - API_PORT=${API_PORT}
+      - TYPEORM_CONNECTION=${TYPEORM_CONNECTION}
+      - TYPEORM_USERNAME=${TYPEORM_USERNAME}
+      - TYPEORM_PASSWORD=${TYPEORM_PASSWORD}
+      - TYPEORM_DB=${TYPEORM_DB}
+      - TYPEORM_PORT=${TYPEORM_PORT}
+      - TYPEORM_HOST=${TYPEORM_HOST}
+    command: npm run start:prod
+    ports:
+      - ${API_PORT}:${API_PORT}
+    links:
+      - "db:database"
+    volumes:
+      - ./server:/app
     restart: unless-stopped
     depends_on:
       - db
   db:
     container_name: ${PRJ_NAME}__db
-    image: postgres:${POSTGRES_VERSION}
+    image: postgres:14.0-alpine
     restart: always
     environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_USER: ${TYPEORM_USERNAME}
+      POSTGRES_PASSWORD: ${TYPEORM_PASSWORD}
+      POSTGRES_DB: ${TYPEORM_DB}
     ports:
-      - "5432:5432"
+      - ${TYPEORM_PORT}:${TYPEORM_PORT}
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
 volumes:
   log_volume_01: {}
-networks:
-  server-network: {}

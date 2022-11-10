@@ -1,13 +1,13 @@
-FROM node:16.17.0-bullseye
+FROM node:16.17.0-bullseye as builder
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
-COPY package*.json ./
-
-RUN npm install
-
+COPY /*.json ./
 COPY . .
 
-# COPY --from=server /usr/src/app/dist ./dist
+RUN npm run build
 
-CMD ["node", "dist/main"]
+FROM node:16.17.0-bullseye
+WORKDIR /app
+COPY --from=builder /app  ./
+EXPOSE ${API_PORT}
